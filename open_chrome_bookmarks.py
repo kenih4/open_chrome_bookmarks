@@ -2,6 +2,8 @@ import json
 import os
 import webbrowser
 import time
+from datetime import datetime, timedelta
+
 
 def find_bookmarks_file():
     """
@@ -108,6 +110,40 @@ def open_urls_in_chrome(urls):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
+
+def replace_url_dates(url: str, days_before: int, days_after: int) -> str:
+    """
+    URL内の'BEGIN'と'END'を、現在日時から指定日数前後の日時に置換します。
+
+    Args:
+        url (str): 置換対象のURL文字列。
+        days_before (int): 現在日時から何日前の日時を'BEGIN'に置換するか。
+        days_after (int): 現在日時から何日後の日時を'END'に置換するか。
+
+    Returns:
+        str: 日時が置換されたURL文字列。
+    """
+    # 現在日時を取得
+    now = datetime.now()
+
+    # 指定日数前の日時を計算
+    calculated_days_before = now - timedelta(days=days_before)
+
+    # 指定日数後の日時を計算
+    calculated_days_after = now + timedelta(days=days_after)
+
+    # 日時を指定されたフォーマット「yyyy/MM/dd+hh:mm:ss」に変換
+    format_str = "%Y/%m/%d+%H:%M:%S"
+    begin_time_str = calculated_days_before.strftime(format_str)
+    end_time_str = calculated_days_after.strftime(format_str)
+
+    # BEGINとENDを置換
+    modified_url = url.replace("BEGIN", begin_time_str).replace("END", end_time_str)
+
+    return modified_url
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if __name__ == "__main__":
     # ここに開きたいブックマークフォルダの名前を指定してください
     target_folder_name = "流行り" # 例: "仕事用サイト", "Daily Links" など
@@ -120,9 +156,11 @@ if __name__ == "__main__":
 
         if urls_to_open:
             print(f"Found {len(urls_to_open)} URLs in folder '{target_folder_name}':")
-            for url in urls_to_open:
+            for index, url in enumerate(urls_to_open):
                 print(f"- {url}")
-            
+                urls_to_open[index] = replace_url_dates(url, 10, 3)
+                print(f"日付置換後: \n{urls_to_open[index]}\n")
+                                
             open_urls_in_chrome(urls_to_open)
             print("Finished opening URLs.")
         else:
