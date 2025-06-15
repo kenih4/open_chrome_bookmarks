@@ -1,6 +1,7 @@
 import json
 import os
 import webbrowser
+import time
 
 def find_bookmarks_file():
     """
