@@ -111,7 +111,7 @@ def open_urls_in_chrome(urls):
         print(f"An unexpected error occurred: {e}")
 
 
-def replace_url_dates(url: str, days_before: int, days_after: int) -> str:
+def replace_url_dates(url: str, days_before: float, days_after: float) -> str:
     """
     URL内の'BEGIN'と'END'を、現在日時から指定日数前後の日時に置換します。
 
@@ -138,14 +138,13 @@ def replace_url_dates(url: str, days_before: int, days_after: int) -> str:
     end_time_str = calculated_days_after.strftime(format_str)
 
     # BEGINとENDを置換
-    #modified_url = url.replace("BEGIN", begin_time_str).replace("END", end_time_str)
-    modified_url = re.sub(r"BEGIN_\d+", begin_time_str, url)
-    modified_url = re.sub(r"END_\d+", end_time_str, modified_url)
-
+    modified_url = re.sub(r"BEGIN_(\d+\.?\d*|\.\d+)", begin_time_str, url)
+    modified_url = re.sub(r"END_(\d+\.?\d*|\.\d+)", end_time_str, modified_url)
+    
     return modified_url
 
 def extract_number_search(text: str, head: str):
-    match = re.search(head+r"_(\d+)", text)
+    match = re.search(head+r"_(\d+\.?\d*|\.\d+)", text)
     if match:
         return match.group(1)
     else:
@@ -167,7 +166,7 @@ if __name__ == "__main__":
             for index, url in enumerate(urls_to_open):
                 print(f"- {url}")
 
-                urls_to_open[index] = replace_url_dates(url, int(extract_number_search(url,"BEGIN")), int(extract_number_search(url,"END")))
+                urls_to_open[index] = replace_url_dates(url, float(extract_number_search(url,"BEGIN")), float(extract_number_search(url,"END")))
                 print(f"日付置換後: \n{urls_to_open[index]}\n")
                                                             
             open_urls_in_chrome(urls_to_open)
