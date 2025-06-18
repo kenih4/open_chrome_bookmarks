@@ -3,7 +3,7 @@ import os
 import webbrowser
 import time
 from datetime import datetime, timedelta
-
+import re
 
 def find_bookmarks_file():
     """
@@ -138,10 +138,18 @@ def replace_url_dates(url: str, days_before: int, days_after: int) -> str:
     end_time_str = calculated_days_after.strftime(format_str)
 
     # BEGINとENDを置換
-    modified_url = url.replace("BEGIN", begin_time_str).replace("END", end_time_str)
+    #modified_url = url.replace("BEGIN", begin_time_str).replace("END", end_time_str)
+    modified_url = re.sub(r"BEGIN_\d+", begin_time_str, url)
+    modified_url = re.sub(r"END_\d+", end_time_str, modified_url)
 
     return modified_url
 
+def extract_number_search(text: str, head: str):
+    match = re.search(head+r"_(\d+)", text)
+    if match:
+        return match.group(1)
+    else:
+        return None
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if __name__ == "__main__":
@@ -158,9 +166,10 @@ if __name__ == "__main__":
             print(f"Found {len(urls_to_open)} URLs in folder '{target_folder_name}':")
             for index, url in enumerate(urls_to_open):
                 print(f"- {url}")
-                urls_to_open[index] = replace_url_dates(url, 10, 3)
+
+                urls_to_open[index] = replace_url_dates(url, int(extract_number_search(url,"BEGIN")), int(extract_number_search(url,"END")))
                 print(f"日付置換後: \n{urls_to_open[index]}\n")
-                                
+                                                            
             open_urls_in_chrome(urls_to_open)
             print("Finished opening URLs.")
         else:
