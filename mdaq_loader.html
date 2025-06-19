@@ -14,10 +14,57 @@
   <h2>ExcelファイルからMDAQリンク生成</h2>
   <input type="file" id="excelFile" accept=".xlsx,.xls">
   <table id="linkTable"></table>
-
-
+<button onclick="openAllLinks()">全部開く残念ながら「1回のクリックからの window.open() は1回まで」の制限あるらしいので不可</button><!---->
+<div id="linkContainer" style="margin-top: 1em;"></div>
 
   <script>
+  let urlList = [];
+/*
+window.openAllLinks = function () {
+  if (!urlList.length) {
+    alert("ファイルを読み込んでください。");
+    return;
+  }
+    console.log("urlList:");
+    console.log(urlList);
+    console.log("~~~~urlList.length:" + urlList.length);
+
+    if (urlList.length > 1 && !confirm(`${urlList.length} 件のウィンドウを開きます。よろしいですか？`)) {
+        return;
+    }
+
+  urlList.forEach((url, index) => {
+    console.log(">>> url:", index, "    ",url);
+    setTimeout(() => {
+      window.open(url, "_blank");
+    }, index * 5000);  // 5秒ずつ間隔を空けたが、　１件目しか開かない..
+    //Chrome や Edge は「ユーザーの明示的操作（ボタンクリック）による window.open() でなければ許可しない」という制限を設けています。
+    //for や setTimeout の中で window.open() を複数回呼び出しても「1回のクリックからの open() は1回まで」という制限が掛かることがあります。
+  });
+};
+*/
+window.openAllLinks = function () {
+  if (!urlList.length) {
+    alert("ファイルを読み込んでください。");
+    return;
+  }
+
+  const container = document.getElementById("linkContainer");
+  container.innerHTML = ""; // リセット
+
+  urlList.forEach((url, index) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.textContent = `▶ ${index + 1}: ${url}`;
+    a.style.display = "block";
+    a.style.marginBottom = "5px";
+    container.appendChild(a);
+  });
+
+  alert("リンクを手動でクリックしてください。Shift+クリックで新しいウィンドウに開けます。");
+};
+
 window.addEventListener("DOMContentLoaded", () => {
   const defaultExcel = "config_sig.xlsx"; // 同じフォルダ内にある想定
 
@@ -51,9 +98,12 @@ window.addEventListener("DOMContentLoaded", () => {
     reader.readAsArrayBuffer(file);
   });
 
+
   function displayTable(rows) {
     const table = document.getElementById("linkTable");
     table.innerHTML = "<tr><th>label</th><th>リンク</th></tr>";
+
+    urlList = [];
 
     rows.forEach(row => {
       const url = new URL("mdaq_helper.html", window.location.href);
@@ -80,8 +130,12 @@ window.addEventListener("DOMContentLoaded", () => {
         <td><a href="${url.toString()}" target="_blank">開く</a></td>
       `;
       table.appendChild(tr);
+          console.log("URL:");
+    console.log(url);
+    urlList.push(url);
     });
   }
+
 
   function formatDate(offsetDays) {
     const date = new Date();
@@ -94,6 +148,20 @@ window.addEventListener("DOMContentLoaded", () => {
     const ss = String(date.getSeconds()).padStart(2, '0');
     return `${yyyy}/${mm}/${dd}+${hh}:${min}:${ss}`;
   }
+
+
+  
+function openAllLinks() {
+  if (!urlList || urlList.length === 0) {
+    alert("URLがまだ生成されていません。ファイルを読み込んでください。");
+    return;
+  }
+
+  for (const url of urlList) {
+    window.open(url, '_blank');
+  }
+}
+
 });
 </script>
 
