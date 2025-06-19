@@ -1,18 +1,37 @@
-<script>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>MDAQ Excel ローダー（時刻付き）</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>ExcelファイルからMDAQリンク生成</h2>
+  <input type="file" id="excelFile" accept=".xlsx,.xls">
+  <table id="linkTable"></table>
+
+
+
+  <script>
 window.addEventListener("DOMContentLoaded", () => {
   const defaultExcel = "config_sig.xlsx"; // 同じフォルダ内にある想定
 
-  fetch(defaultExcel)
-    .then(res => res.arrayBuffer())
-    .then(data => {
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet);
-      displayTable(rows);  // 表示処理を分離
-    })
-    .catch(err => {
-      console.warn("自動読み込みに失敗しました。手動でファイルを選択してください。", err);
-    });
+  fetch(defaultExcel + "?ts=" + new Date().getTime())  //fetch() で読み込んだ Excel の中身が「キャッシュ」されているとだめなので、キャッシュ無効化付きの fetch に修正する
+  .then(res => res.arrayBuffer())
+  .then(data => {
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+    displayTable(rows);  // 表示処理を分離
+  })
+  .catch(err => {
+    console.warn("自動読み込みに失敗しました。手動でファイルを選択してください。", err);
+  });
 
   // 手動アップロードにも対応
   document.getElementById("excelFile").addEventListener("change", function(e) {
@@ -77,3 +96,6 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
+
+</body>
+</html>
