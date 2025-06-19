@@ -12,6 +12,11 @@
 </head>
 <body>
   <h2>ExcelファイルからMDAQリンク生成</h2>
+  C:\Users\kenic\Dropbox\gitdir\open_chrome_bookmarks<br>
+で、
+python -m http.server 8080<br>
+としてサーバー起動する必要あり<br>
+※javascrit で input type="file" を使うとき、ローカルに置いただけのファイルでは機能しない為<br>
   <input type="file" id="excelFile" accept=".xlsx,.xls">
   <table id="linkTable"></table>
 <button onclick="openAllLinks()">全部開く残念ながら「1回のクリックからの window.open() は1回まで」の制限あるらしいので不可</button><!---->
