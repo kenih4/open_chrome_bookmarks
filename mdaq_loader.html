@@ -1,90 +1,79 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>MDAQ Excel ローダー（時刻付き）</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: sans-serif; margin: 20px; }
-    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-  </style>
-</head>
-<body>
-  <h2>ExcelファイルからMDAQリンク生成</h2>
-  <input type="file" id="excelFile" accept=".xlsx,.xls">
-  <table id="linkTable"></table>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const defaultExcel = "config_sig.xlsx"; // 同じフォルダ内にある想定
 
-  <script>
-    function formatDate(offsetDays) {
-      const date = new Date();
-      date.setTime(date.getTime() + offsetDays * 24 * 60 * 60 * 1000);
-
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-      const hh = String(date.getHours()).padStart(2, '0');
-      const min = String(date.getMinutes()).padStart(2, '0');
-      const ss = String(date.getSeconds()).padStart(2, '0');
-
-      return `${yyyy}/${mm}/${dd}+${hh}:${min}:${ss}`;
-    }
-
-    document.getElementById("excelFile").addEventListener("change", function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      e.target.value = "";  // 同じファイルを連続で読み込むと、<input type="file"> がイベントを発火しないため選択をクリアして次回も読み込ませる   
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet);
-
-        const table = document.getElementById("linkTable");
-        table.innerHTML = "<tr><th>label</th><th>リンク</th></tr>";
-
-        rows.forEach(row => {
-          const url = new URL("mdaq_helper.html", window.location.href);
-
-          // 固定パラメータ
-          const params = {
-            sampling: row.sampling,
-            _sig0: row._sig0,
-            ymin: row.ymin,
-            ymax: row.ymax,
-            _sig1: row._sig1,
-            y2min: row.y2min,
-            y2max: row.y2max,
-          };
-
-          // begin/end を現在時刻からの相対値で日時変換
-          if (row.begin !== undefined) {
-            params.b = formatDate(parseFloat(row.begin));
-          }
-          if (row.end !== undefined) {
-            params.e = formatDate(parseFloat(row.end));
-          }
-
-          Object.entries(params).forEach(([key, val]) => {
-if (val !== undefined) {
-    url.searchParams.set(key, val); // 空文字も許容
-}
-          });
-
-          const label = row.label || "No Label";
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${label}</td>
-            <td><a href="${url.toString()}" target="_blank">開く</a></td>
-          `;
-          table.appendChild(tr);
-        });
-      };
-
-      reader.readAsArrayBuffer(file);
+  fetch(defaultExcel)
+    .then(res => res.arrayBuffer())
+    .then(data => {
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+      displayTable(rows);  // 表示処理を分離
+    })
+    .catch(err => {
+      console.warn("自動読み込みに失敗しました。手動でファイルを選択してください。", err);
     });
-  </script>
-</body>
-</html>
+
+  // 手動アップロードにも対応
+  document.getElementById("excelFile").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    e.target.value = "";  // 同じファイルを連続で読み込むと、<input type="file"> がイベントを発火しないため選択をクリアして次回も読み込ませる   
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+      displayTable(rows);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function displayTable(rows) {
+    const table = document.getElementById("linkTable");
+    table.innerHTML = "<tr><th>label</th><th>リンク</th></tr>";
+
+    rows.forEach(row => {
+      const url = new URL("mdaq_helper.html", window.location.href);
+
+      const b = row.begin !== undefined ? formatDate(parseFloat(row.begin) || 0) : "";
+      const e = row.end !== undefined ? formatDate(parseFloat(row.end) || 0) : "";
+      if (row.begin !== undefined) url.searchParams.set("b", b);
+      if (row.end !== undefined) url.searchParams.set("e", e);
+
+      const keys = [
+        "sampling", "_sig0", "ymin", "ymax",
+        "_sig1", "y2min", "y2max"
+      ];
+      keys.forEach(key => {
+        if (key in row) {
+          url.searchParams.set(key, row[key] ?? "");
+        }
+      });
+
+      const label = row.label || "No Label";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${label}</td>
+        <td><a href="${url.toString()}" target="_blank">開く</a></td>
+      `;
+      table.appendChild(tr);
+    });
+  }
+
+  function formatDate(offsetDays) {
+    const date = new Date();
+    date.setTime(date.getTime() + offsetDays * 24 * 60 * 60 * 1000);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    return `${yyyy}/${mm}/${dd}+${hh}:${min}:${ss}`;
+  }
+});
+</script>
