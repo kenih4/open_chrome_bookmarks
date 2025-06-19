@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<!--
+file:///C:/Users/kenic/Dropbox/gitdir/open_chrome_bookmarks/mdaq_helper.html?sampling=100&b=2025/06/19+17:09:17&3=2025/06/19+18:09:17&_sig0=607338&ymin=-0.05&ymax=-0.03&_sig1=607355&y2min=-0.6&y2max=-0.1
+-->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>MDAQ グラフ再表示ツール</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    label { display: inline-block; width: 90px; margin-bottom: 8px; }
+    input[type="text"] { width: 250px; }
+    #result { margin-top: 20px; }
+    iframe { margin-top: 20px; width: 100%; height: 600px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h2>MDAQ グラフ再表示</h2>
+  <p>よく使うパラメータを入力して、簡単にグラフを再表示できます。</p>
+  <form id="paramForm">
+    <label for="sampling">sampling:</label>
+    <input type="text" id="sampling" value=""><br>
+
+    <label for="ymin">ymin:</label>
+    <input type="text" id="ymin" value=""><br>
+
+    <label for="ymax">ymax:</label>
+    <input type="text" id="ymax" value=""><br>
+
+    <label for="b">b（開始）:</label>
+    <input type="text" id="b" value=""><br>
+
+    <label for="e">e（終了）:</label>
+    <input type="text" id="e" value=""><br>
+
+    <label for="y2min">y2min:</label>
+    <input type="text" id="y2min" value=""><br>
+
+    <label for="y2max">y2max:</label>
+    <input type="text" id="y2max" value=""><br>
+
+    <label for="_sig0">_sig0:</label>
+    <input type="text" id="_sig0" value=""><br>
+
+    <label for="_sig1">_sig1:</label>
+    <input type="text" id="_sig1" value=""><br>
+
+    <button type="submit">再表示</button>
+  </form>
+
+  <div id="result">
+    <p>生成されたURL:</p>
+    <a id="generatedLink" href="#" target="_blank">ここをクリックして開く</a>
+    <iframe id="preview" src=""></iframe>
+  </div>
+
+
+
+  <script>
+  const baseUrl = "http://srweb-dmz-03.spring8.or.jp/cgi-bin/MDAQ/mdaq_plot.py";
+  const fixedParams = {
+    daq_type: "1",
+    period: "900",
+    bel: "be",
+    format: "plot",
+    data_order: "asc",
+    legend_pos: "left",
+    dt_fmt: "0",
+    gw: "640",
+    runave: "0",
+    hide_err: "on",
+    _axis0: "y",
+    _style0: "line",
+    _axis1: "y2",
+    _style1: "line",
+    yloglin: "lin",
+    y2tics: "on",
+    y2loglin: "lin",
+    xloglin: "lin",
+    replot: "Plot"
+  };
+
+  // --- URL パラメータをフォームに適用 ---
+  window.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const keys = [
+      "sampling", "ymin", "ymax", "b", "e",
+      "y2min", "y2max", "_sig0", "_sig1"
+    ];
+    keys.forEach(key => {
+      const el = document.getElementById(key);
+      if (el && urlParams.has(key)) {
+        el.value = urlParams.get(key);
+      }
+    });
+
+    // 自動的に送信（任意。手動送信にしたい場合はこのブロックを消してください）
+    document.getElementById("paramForm").dispatchEvent(new Event("submit"));
+  });
+
+  document.getElementById("paramForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const params = {
+      ...fixedParams,
+      sampling: document.getElementById("sampling").value,
+      ymin: document.getElementById("ymin").value,
+      ymax: document.getElementById("ymax").value,
+      b: document.getElementById("b").value,
+      e: document.getElementById("e").value,
+      y2min: document.getElementById("y2min").value,
+      y2max: document.getElementById("y2max").value,
+      _sig0: document.getElementById("_sig0").value,
+      _sig1: document.getElementById("_sig1").value
+    };
+
+    const queryString = new URLSearchParams(params).toString();
+    const fullUrl = `${baseUrl}?${queryString}`;
+
+    document.getElementById("generatedLink").href = fullUrl;
+    document.getElementById("generatedLink").textContent = fullUrl;
+    document.getElementById("preview").src = fullUrl;
+  });
+</script>
+
+</body>
+</html>

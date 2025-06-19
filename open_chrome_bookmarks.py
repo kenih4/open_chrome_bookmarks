@@ -101,7 +101,7 @@ def open_urls_in_chrome(urls):
                 chrome.open_new_tab(url)
             
             # 連続でタブを開くとブラウザが一時的に固まることがあるため、少し間隔を空ける
-            time.sleep(0.5) # 0.5秒待つ
+            time.sleep(10.5) # 0.5秒待つ
 
     except webbrowser.Error as e:
         print(f"Error opening Chrome: {e}")
